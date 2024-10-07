@@ -1,56 +1,75 @@
-﻿using System.Data;
-using Dapper;
+﻿using HelloWorld.Data;
 using HelloWorld.Models;
-using Microsoft.Data.SqlClient;
-
-// Connection string for SQL Server on Windows parts:
-// Server=localhost; - the server address
-// Database=DotNetCourseDatabase; - the database name
-// Trusted_Connection=True; - use Windows authentication
-// TrustServerCertificate=True; - trust the server certificate (no SSL only for development)
-
-string connectionString = "Server=localhost;Database=DotNetCourseDatabase;TrustServerCertificate=true;Trusted_Connection=true;";
-// Connection string for SQL Server on Linux parts:
-// string connectionString = "Server=localhost;Database=DotNetCourseDatabase;TrustServerCertificate=true;User Id=sa;Password=Password123";
+using Microsoft.Extensions.Configuration;
 
 
-IDbConnection dbConnection = new SqlConnection(connectionString);
-
-string sql = "SELECT GETDATE() AS CurrentDateTime";
-
-// Test the connection
-DateTime currentDateTime = dbConnection.QuerySingle<DateTime>(sql);
-Console.WriteLine($"Current date and time: {currentDateTime}");
-
-Computer myComputer = new()
+namespace HelloWorld
 {
-  ComputerId = 0,
-  Motherboard = "Z690",
-  HasWifi = true,
-  HasLTE = false,
-  ReleaseDate = DateTime.Now,
-  Price = 943.87m,
-  VideoCard = "RTX 2060"
-};
+  internal class Program
+  {
+    static void Main(string[] args)
+    {
 
-// Insert a new computer using myComputer object
+      IConfiguration config = new ConfigurationBuilder()
+                  .AddJsonFile("appSettings.json")
+                  .Build();
 
-string sqlInsert = $@"INSERT INTO TutorialAppSchema.Computer (
-  Motherboard, 
-  HasWifi, 
-  HasLTE, 
-  ReleaseDate, 
-  Price, 
-  VideoCard
-) VALUES (
-  '{myComputer.Motherboard}', 
-  '{myComputer.HasWifi}', 
-  '{myComputer.HasLTE}',
-  '{myComputer.ReleaseDate}',
-  '{myComputer.Price}',
-  '{myComputer.VideoCard}'
-)";
+      DataContextDapper dapper = new(config);
 
-int result = dbConnection.Execute(sqlInsert);
+      // Test the connection
+      DateTime currentDateTime = dapper.LoadDataSingle<DateTime>("SELECT GETDATE()");
+      Console.WriteLine($"Current date and time: {currentDateTime}");
 
-Console.WriteLine($"Inserted {result} row(s) into the Computer table.");
+      // Computer myComputer = new()
+      // {
+      //   ComputerId = 0,
+      //   Motherboard = "Z690",
+      //   HasWifi = true,
+      //   HasLTE = false,
+      //   ReleaseDate = DateTime.Now,
+      //   Price = 943.87m,
+      //   VideoCard = "RTX 2060"
+      // };
+
+      // Insert a new computer using myComputer object
+      // string sqlInsert = $@"INSERT INTO TutorialAppSchema.Computer (
+      //   Motherboard, 
+      //   HasWifi, 
+      //   HasLTE, 
+      //   ReleaseDate, 
+      //   Price, 
+      //   VideoCard
+      // ) VALUES (
+      //   '{myComputer.Motherboard}', 
+      //   '{myComputer.HasWifi}', 
+      //   '{myComputer.HasLTE}',
+      //   '{myComputer.ReleaseDate}',
+      //   '{myComputer.Price}',
+      //   '{myComputer.VideoCard}'
+      // )";
+
+      // int result = dbConnection.Execute(sqlInsert);
+      // Console.WriteLine($"Inserted {result} row(s) into the Computer table.");
+
+      // Read all computers from the Computer table
+      string sqlSelect = "SELECT * FROM TutorialAppSchema.Computer";
+      // Read all Motherboards field from the Computer table
+      string sqlSelectMotherboards = "SELECT Motherboard FROM TutorialAppSchema.Computer";
+
+      IEnumerable<Computer> computers = dapper.LoadData<Computer>(sqlSelect);
+
+      foreach (Computer computer in computers)
+      {
+        Console.WriteLine($"ComputerId: {computer.ComputerId}, Motherboard: {computer.Motherboard}, HasWifi: {computer.HasWifi}, HasLTE: {computer.HasLTE}, ReleaseDate: {computer.ReleaseDate}, Price: {computer.Price}, VideoCard: {computer.VideoCard}");
+      }
+
+      IEnumerable<string> motherboards = dapper.LoadData<string>(sqlSelectMotherboards);
+
+      foreach (string motherboard in motherboards)
+      {
+        Console.WriteLine($"Motherboard: {motherboard}");
+      }
+
+    }
+  }
+}
