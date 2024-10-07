@@ -1,5 +1,6 @@
 ﻿using System.Data;
 using Dapper;
+using HelloWorld.Models;
 using Microsoft.Data.SqlClient;
 
 // Connection string for SQL Server on Windows parts:
@@ -20,3 +21,36 @@ string sql = "SELECT GETDATE() AS CurrentDateTime";
 // Test the connection
 DateTime currentDateTime = dbConnection.QuerySingle<DateTime>(sql);
 Console.WriteLine($"Current date and time: {currentDateTime}");
+
+Computer myComputer = new()
+{
+  ComputerId = 0,
+  Motherboard = "Z690",
+  HasWifi = true,
+  HasLTE = false,
+  ReleaseDate = DateTime.Now,
+  Price = 943.87m,
+  VideoCard = "RTX 2060"
+};
+
+// Insert a new computer using myComputer object
+
+string sqlInsert = $@"INSERT INTO TutorialAppSchema.Computer (
+  Motherboard, 
+  HasWifi, 
+  HasLTE, 
+  ReleaseDate, 
+  Price, 
+  VideoCard
+) VALUES (
+  '{myComputer.Motherboard}', 
+  '{myComputer.HasWifi}', 
+  '{myComputer.HasLTE}',
+  '{myComputer.ReleaseDate}',
+  '{myComputer.Price}',
+  '{myComputer.VideoCard}'
+)";
+
+int result = dbConnection.Execute(sqlInsert);
+
+Console.WriteLine($"Inserted {result} row(s) into the Computer table.");
